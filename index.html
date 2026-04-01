@@ -1,0 +1,79 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>VRP Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+</head>
+<body>
+    <h2>🚚 Delivery Optimization Dashboard</h2>
+
+    <form id="form">
+        <label>Select Locations:</label><br>
+        {% for loc in locations %}
+            <input type="checkbox" name="locations" value="{{loc}}">{{loc}}<br>
+        {% endfor %}
+
+        <label>Vehicles:</label>
+        <select name="vehicles">
+            <option value="1">1</option>
+            <option value="2">2</option>
+            <option value="3">3</option>
+        </select>
+
+        <br><br>
+        <button type="submit">Optimize</button>
+    </form>
+
+    <div id="map" style="height:400px;margin-top:20px;"></div>
+
+    <canvas id="chart"></canvas>
+
+    <script>
+        const map = L.map('map').setView([19.0760, 72.8777], 11);
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+        const coords = {
+            "Warehouse": [19.0760,72.8777],
+            "Andheri": [19.1136,72.8697],
+            "Bandra": [19.0596,72.8295],
+            "Dadar": [19.0176,72.8562],
+            "Powai": [19.1176,72.9060]
+        };
+
+        document.getElementById("form").onsubmit = async (e) => {
+            e.preventDefault();
+
+            const formData = new FormData(e.target);
+            const res = await fetch("/", { method:"POST", body: formData });
+            const data = await res.json();
+
+            map.eachLayer(layer => {
+                if(layer instanceof L.Marker || layer instanceof L.Polyline) map.removeLayer(layer);
+            });
+
+            let distances = [];
+
+            data.routes.forEach((route, i) => {
+                let latlngs = [];
+                route.forEach(loc => {
+                    L.marker(coords[loc]).addTo(map).bindPopup(loc);
+                    latlngs.push(coords[loc]);
+                });
+
+                L.polyline(latlngs).addTo(map);
+                distances.push(latlngs.length);
+            });
+
+            new Chart(document.getElementById("chart"), {
+                type: 'bar',
+                data: {
+                    labels: data.routes.map((_,i)=>"Vehicle "+(i+1)),
+                    datasets: [{ label:"Stops", data: distances }]
+                }
+            });
+        }
+    </script>
+</body>
+</html>
