@@ -1,4 +1,3 @@
-"""
 # 🚚 VRP Delivery Optimization Dashboard
 
 ## Features
@@ -21,4 +20,3 @@ Open http://127.0.0.1:5000
 ## Output
 - Routes on map
 - Graph showing stops per vehicle
-"""
